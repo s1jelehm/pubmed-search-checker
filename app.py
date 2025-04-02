@@ -35,6 +35,8 @@ def compare_pmids(retrieved_pmids: List[str], known_pmids: List[str]) -> dict:
 # Streamlit interface
 st.title("PubMed Search String Checker")
 
+st.write("✅ App is ready. Please enter your query and PMIDs below.")
+
 search_query = st.text_input("Enter your PubMed Search Query:")
 known_pmids_input = st.text_area("Enter known PMIDs (comma-separated):")
 
@@ -43,19 +45,23 @@ if st.button("Check Search String"):
         st.warning("Please provide both a search query and known PMIDs.")
     else:
         known_pmids = [pmid.strip() for pmid in known_pmids_input.split(",") if pmid.strip()]
-        try:
-            retrieved_pmids = get_pubmed_pmids(search_query)
-            comparison = compare_pmids(retrieved_pmids, known_pmids)
+        with st.spinner("🔍 Querying PubMed and comparing PMIDs..."):
+            try:
+                retrieved_pmids = get_pubmed_pmids(search_query, max_results=500)
+                comparison = compare_pmids(retrieved_pmids, known_pmids)
 
-            st.write(f"### Results for Search Query:\n`{search_query}`")
-            st.write(f"**Total Known PMIDs:** {comparison['total_known']}")
-            st.write(f"**Found:** {comparison['found_count']} / **Missed:** {comparison['missed_count']}")
+                st.success("✅ Check completed!")
+                st.write(f"### Results for Search Query:\n`{search_query}`")
+                st.write(f"**Total Known PMIDs:** {comparison['total_known']}")
+                st.write(f"**Found:** {comparison['found_count']} / **Missed:** {comparison['missed_count']}")
 
-            st.write("**Found PMIDs:**")
-            st.write(", ".join(comparison['found_pmids']))
+                if comparison['found_pmids']:
+                    st.write("**Found PMIDs:**")
+                    st.write(", ".join(comparison['found_pmids']))
 
-            st.write("**Missed PMIDs:**")
-            st.write(", ".join(comparison['missed_pmids']))
+                if comparison['missed_pmids']:
+                    st.write("**Missed PMIDs:**")
+                    st.write(", ".join(comparison['missed_pmids']))
 
-        except Exception as e:
-            st.error(f"An error occurred: {e}")
+            except Exception as e:
+                st.error(f"An error occurred: {e}")
